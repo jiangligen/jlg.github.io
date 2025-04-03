@@ -5,15 +5,24 @@
   
 
   
-  <title>Archives | Hexo</title>
+  <title>Adding Lookup Field to a Page in Dynamics NAV | Hexo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Hexo">
-<meta property="og:url" content="http://example.com/archives/index.html">
+  <meta name="description" content="One of the problems I faced in building a non-trivial application that consumedNAV Web Services was figuring out how to “join” fields from different tables.For example, when exposing a list of jobs fr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Adding Lookup Field to a Page in Dynamics NAV">
+<meta property="og:url" content="http://example.com/2015/04/05/2015-04-05-Lookup-on-Page/index.html">
 <meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="One of the problems I faced in building a non-trivial application that consumedNAV Web Services was figuring out how to “join” fields from different tables.For example, when exposing a list of jobs fr">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://ptsteadman.github.io/images/lookup-1.PNG">
+<meta property="og:image" content="http://ptsteadman.github.io/images/lookup-2.PNG">
+<meta property="article:published_time" content="2015-04-04T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-08T17:32:24.000Z">
 <meta property="article:author" content="John Doe">
+<meta property="article:tag" content="Resources">
+<meta property="article:tag" content="NAV">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://ptsteadman.github.io/images/lookup-1.PNG">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -62,203 +71,73 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2025" class="archive-year">2025</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2025/04/03/hello-world/" class="archive-article-date">
-  <time datetime="2025-04-03T08:17:24.237Z" itemprop="datePublished">Apr 3</time>
+        <section id="main"><article id="post-2015-04-05-Lookup-on-Page" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/04/05/2015-04-05-Lookup-on-Page/" class="article-date">
+  <time datetime="2015-04-04T16:00:00.000Z" itemprop="datePublished">2015-04-05</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Dynamics-NAV/">Dynamics NAV</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2025/04/03/hello-world/">Hello World</a>
+    <h1 class="article-title" itemprop="name">
+      Adding Lookup Field to a Page in Dynamics NAV
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
+    <div class="article-entry" itemprop="articleBody">
       
-        </div></section>
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2016" class="archive-year">2016</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/01/02/2016-01-02-Notes-On-Creating-A-Hexo-Theme/" class="archive-article-date">
-  <time datetime="2016-01-01T16:00:00.000Z" itemprop="datePublished">Jan 2</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/01/02/2016-01-02-Notes-On-Creating-A-Hexo-Theme/">Notes On Creating A Hexo Theme</a>
-    </h1>
-  
+        <p>One of the problems I faced in building a non-trivial application that consumed<br>NAV Web Services was figuring out how to “join” fields from different tables.<br>For example, when exposing a list of jobs from a job table which includes a<br>resource needed for the job, you might need more than just the resource id<br>that’s a field in the table: you might also need the resource name and<br>description.  While this is easy to get for one record, what about when you<br>need a few hundred records in a table that has been dynamically filtered?  When<br>exposing a Page as a web service, it’s easy to include the fields of the table<br>that the page is based on, but it’s less clear how to include fields from<br>another table.</p>
+<p>Forum posts like <a target="_blank" rel="noopener" href="http://dynamicsuser.net/forums/p/32550/170843.aspx">this</a> led me to believe that I couldn’t expose flow fields in a Page web service, and I would get exceptions when I tried to expose all the fields of a table.  In fact, it’s perfectly possible to expose a flow field: it’s <strong>flow filters</strong> that don’t work with web services.  But, I also didn’t want to modify the underlying [job] table to add a flow field, and didn’t see an easy way of adding a flow field to a Page.  I tried “joining” the data in the C# application, but found network overhead made the application unusuably slow.</p>
+<p>The solution to this problem was to use C/AL code to the Page to effectively create a lookup / flow field.  This way, the data is “pre-joined” before leaving the NAV Server, which is fast and clean, but you didn’t modify any tables.  Here’s how it’s done:</p>
+<p>Step 1. <strong>Add a Field with SourceExpression Set to a Function Name</strong></p>
+<p>To start, we create a Page using the wizard that includes all of the fields of an underlying table.  Then, we create manually add fields that will contain the lookup data from other tables.  The text in the SourceExpression column will be the name of the function that populates this field.<br><img src="http://ptsteadman.github.io/images/lookup-1.PNG" alt="Add a Field with SourceExpression Set to a Function Name"></p>
+<p>Step 2. <strong>Create Function in the Page’s C/AL Code</strong></p>
+<p>With the Page field designer open, go to the functions tab of C/AL Globals form, and add a function with the name of the text in the SourceExpression column.  Set the return type of the function with the “Locals” button, and a function trigger will appear in the C/AL code editor for your page.  Add code to the body of the function trigger that will be called for each record to provide a value for the field.<br><img src="http://ptsteadman.github.io/images/lookup-2.PNG" alt="Create Function in the Page&#39;s C/AL Code"></p>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
       
-        </div></section>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2015/04/05/2015-04-05-Lookup-on-Page/" data-id="cm913a0ql0003rc0n1khxatil" class="article-share-link">Share</a>
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2015" class="archive-year">2015</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/05/02/2015-05-02-How-To-Impress/" class="archive-article-date">
-  <time datetime="2015-05-01T16:00:00.000Z" itemprop="datePublished">May 2</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/05/02/2015-05-02-How-To-Impress/">How To Impress Employers at Infosessions</a>
-    </h1>
-  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NAV/" rel="tag">NAV</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Resources/" rel="tag">Resources</a></li></ul>
 
-    </header>
+    </footer>
   </div>
-</article>
   
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/04/08/2015-04-08-NAV-Programming-Resources/" class="archive-article-date">
-  <time datetime="2015-04-07T16:00:00.000Z" itemprop="datePublished">Apr 8</time>
-</a>
-      
+<nav id="article-nav">
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/04/08/2015-04-08-NAV-Programming-Resources/">NAV Web Service Programming Resources</a>
-    </h1>
+    <a href="/2015/04/08/2015-04-08-NAV-Programming-Resources/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          NAV Web Service Programming Resources
+        
+      </div>
+    </a>
   
+  
+    <a href="/2015/04/01/2015-04-01-NGINX-Static-Locations/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Static NGINX Locations</div>
+    </a>
+  
+</nav>
 
-    </header>
-  </div>
+  
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/04/05/2015-04-05-Lookup-on-Page/" class="archive-article-date">
-  <time datetime="2015-04-04T16:00:00.000Z" itemprop="datePublished">Apr 5</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/04/05/2015-04-05-Lookup-on-Page/">Adding Lookup Field to a Page in Dynamics NAV</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/04/01/2015-04-01-NGINX-Static-Locations/" class="archive-article-date">
-  <time datetime="2015-03-31T16:00:00.000Z" itemprop="datePublished">Apr 1</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/04/01/2015-04-01-NGINX-Static-Locations/">Static NGINX Locations</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/03/23/2015-03-23-Make-VS-Insert-Spaces/" class="archive-article-date">
-  <time datetime="2015-03-22T16:00:00.000Z" itemprop="datePublished">Mar 23</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/03/23/2015-03-23-Make-VS-Insert-Spaces/">Spaces for Newline Indents in VS</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-      
-        </div></section>
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2014" class="archive-year">2014</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2014/02/23/2014-02-23-hello-world/" class="archive-article-date">
-  <time datetime="2014-02-22T16:00:00.000Z" itemprop="datePublished">Feb 23</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2014/02/23/2014-02-23-hello-world/">Welcome To Hexo</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
 
 </section>
         
